@@ -178,6 +178,11 @@ typedef void (^RMStoreSuccessBlock)(void);
     return sharedInstance;
 }
 
+- (NSArray*)savedPromotionPayments
+{
+    return _savedPromotionPayments;
+}
+
 #pragma mark StoreKit wrapper
 
 + (BOOL)canMakePayments
@@ -234,10 +239,12 @@ typedef void (^RMStoreSuccessBlock)(void);
     [[SKPaymentQueue defaultQueue] addPayment:payment];
 }
 
-- (void)addExistingPayment:(SKPayment*)payment
+- (void)addPromotionPayment:(SKPayment*)payment
            success:(void (^)(SKPaymentTransaction *transaction))successBlock
            failure:(void (^)(SKPaymentTransaction *transaction, NSError *error))failureBlock
 {
+    [_savedPromotionPayments removeObject:payment];
+    
     SKProduct *product = [self productForIdentifier:payment.productIdentifier];
     if (product == nil)
     {

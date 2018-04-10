@@ -76,9 +76,13 @@ extern NSInteger const RMStoreErrorCodeUnableToCompleteVerification;
  @param successBlock The block to be called if the payment is sucessful. Can be `nil`.
  @param failureBlock The block to be called if the payment fails or there isn't any product with the given identifier. Can be `nil`.
  */
-- (void)addExistingPayment:(SKPayment*)payment
+- (void)addPromotionPayment:(SKPayment*)payment
                    success:(void (^)(SKPaymentTransaction *transaction))successBlock
                    failure:(void (^)(SKPaymentTransaction *transaction, NSError *error))failureBlock;
+
+/** Returns the saved App-Store promotion payments
+ */
+- (NSArray*)savedPromotionPayments;
 
 /** Request payment of the product with the given product identifier. `successBlock` will be called if the payment is successful, `failureBlock` if it isn't.
  @param productIdentifier The identifier of the product whose payment will be requested.
