@@ -234,6 +234,29 @@ typedef void (^RMStoreSuccessBlock)(void);
     [[SKPaymentQueue defaultQueue] addPayment:payment];
 }
 
+- (void)addExistingPayment:(SKPayment*)payment
+           success:(void (^)(SKPaymentTransaction *transaction))successBlock
+           failure:(void (^)(SKPaymentTransaction *transaction, NSError *error))failureBlock
+{
+    SKProduct *product = [self productForIdentifier:payment.productIdentifier];
+    if (product == nil)
+    {
+        RMStoreLog(@"unknown product id %@", payment.productIdentifier)
+        if (failureBlock != nil)
+        {
+            NSError *error = [NSError errorWithDomain:RMStoreErrorDomain code:RMStoreErrorCodeUnknownProductIdentifier userInfo:@{NSLocalizedDescriptionKey: NSLocalizedStringFromTable(@"Unknown product identifier", @"RMStore", @"Error description")}];
+            failureBlock(nil, error);
+        }
+        return;
+    }
+    
+    RMAddPaymentParameters *parameters = [[RMAddPaymentParameters alloc] init];
+    parameters.successBlock = successBlock;
+    parameters.failureBlock = failureBlock;
+    _addPaymentParameters[payment.productIdentifier] = parameters;
+    [[SKPaymentQueue defaultQueue] addPayment:payment];
+}
+
 - (void)requestProducts:(NSSet*)identifiers
 {
     [self requestProducts:identifiers success:nil failure:nil];
