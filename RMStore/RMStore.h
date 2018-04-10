@@ -24,6 +24,7 @@
 @protocol RMStoreContentDownloader;
 @protocol RMStoreReceiptVerifier;
 @protocol RMStoreTransactionPersistor;
+@protocol RMStorePromotionPaymentObserver;
 @protocol RMStoreObserver;
 
 extern NSString *const RMStoreErrorDomain;
@@ -51,6 +52,10 @@ extern NSInteger const RMStoreErrorCodeUnableToCompleteVerification;
 /** Returns whether the user is allowed to make payments.
  */
 + (BOOL)canMakePayments;
+
+/** Accept queued or saved App-Store Promotion Payments. These promotions can be queued by the Apple App-Store when 'RMStorePromotionPaymentObserver' is not implemented, or saved for later when 'RMStorePromotionPaymentObserver' is implemented and returns 'NO' for 'shouldAddStorePayment'
+*/
+- (void)acceptSavedPromotionPayments;
 
 /** Request payment of the product with the given product identifier.
  @param productIdentifier The identifier of the product whose payment will be requested.
@@ -159,6 +164,12 @@ extern NSInteger const RMStoreErrorCodeUnableToCompleteVerification;
 @property (nonatomic, weak) id<RMStoreTransactionPersistor> transactionPersistor;
 
 
+/**
+ https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/StoreKitGuide/PromotingIn-AppPurchases/PromotingIn-AppPurchases.html
+ The In-App Store payment observer for promotions. Provide your own store payment acceptor to accept payments receieved from the App Store.
+ */
+@property (nonatomic, weak) id<RMStorePromotionPaymentObserver> promotionPaymentObserver;
+
 #pragma mark Product management
 ///---------------------------------------------
 /// @name Managing Products
@@ -185,6 +196,22 @@ extern NSInteger const RMStoreErrorCodeUnableToCompleteVerification;
 - (void)removeStoreObserver:(id<RMStoreObserver>)observer;
 
 @end
+
+
+@protocol RMStorePromotionPaymentObserver <NSObject>
+
+/**
+ Allows RMStore to accept a payment made from an App Store promotion (https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/StoreKitGuide/PromotingIn-AppPurchases/PromotingIn-AppPurchases.html ).
+ If not ready to accept, return `NO` and RMStore will save the payment. Call `acceptSavedPromotionPayments` at a later time for RMStore to accept the saved payments.
+ @param payment Payment to accept or save.
+ @param queue Queue the payment request was made on.
+ @param product Product for the payment.
+ */
+
+- (BOOL)acceptPromotionPayment:(SKPayment*)payment fromQueue:(SKPaymentQueue*)queue forProduct:(SKProduct*)product;
+
+@end
+
 
 @protocol RMStoreContentDownloader <NSObject>
 

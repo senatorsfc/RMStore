@@ -136,6 +136,8 @@ typedef void (^RMStoreSuccessBlock)(void);
     
     NSMutableArray *_restoredTransactions;
     
+    NSMutableArray *_savedPromotionPayments;
+    
     NSInteger _pendingRestoredTransactionsCount;
     BOOL _restoredCompletedTransactionsFinished;
     
@@ -155,6 +157,7 @@ typedef void (^RMStoreSuccessBlock)(void);
         _products = [NSMutableDictionary dictionary];
         _productsRequestDelegates = [NSMutableSet set];
         _restoredTransactions = [NSMutableArray array];
+        _savedPromotionPayments = [NSMutableArray array];
         [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
     }
     return self;
@@ -180,6 +183,13 @@ typedef void (^RMStoreSuccessBlock)(void);
 + (BOOL)canMakePayments
 {
     return [SKPaymentQueue canMakePayments];
+}
+
+- (void)acceptSavedPromotionPayments{
+    for (SKPayment* payment in _savedPromotionPayments) {
+        [[SKPaymentQueue defaultQueue] addPayment:payment];
+    }
+    [_savedPromotionPayments removeAllObjects];
 }
 
 - (void)addPayment:(NSString*)productIdentifier
@@ -411,6 +421,16 @@ typedef void (^RMStoreSuccessBlock)(void);
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:RMSKRestoreTransactionsFailed object:self userInfo:userInfo];
 }
+
+#if defined(__IPHONE_11_0) && (__IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_11_0)
+- (BOOL)paymentQueue:(SKPaymentQueue *)queue shouldAddStorePayment:(SKPayment *)payment forProduct:(SKProduct *)product{
+    if (self.promotionPaymentObserver != nil && ![self.promotionPaymentObserver acceptPromotionPayment:payment fromQueue:queue forProduct:product]){
+        [_savedPromotionPayments addObject:payment];
+        return NO;
+    }
+    return YES;
+}
+#endif
 
 - (void)paymentQueue:(SKPaymentQueue *)queue updatedDownloads:(NSArray *)downloads
 {
